@@ -1,0 +1,75 @@
+# ========================================
+# Laravel / PHP
+# ========================================
+/vendor
+/vendor/**
+/bootstrap/cache/*.php
+/storage/*.key
+/storage/framework/*
+!/storage/framework/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# ========================================
+# Node / Frontend (Vite, Vue)
+# ========================================
+/node_modules
+/node_modules/**
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+
+# Vite build output
+/public/build
+/public/build/**
+/public/hot
+
+# ========================================
+# Docker
+# ========================================
+# MySQL data volume (bind or named, на всякий случай)
+mysql_data
+mysql_data/**
+dbdata
+dbdata/**
+
+# ========================================
+# IDE / OS
+# ========================================
+.idea
+.vscode
+.vscode/*
+*.iml
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================================
+# Tests / Coverage
+# ========================================
+/coverage
+.phpunit.result.cache
+
+# ========================================
+# Logs / Temp
+# ========================================
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ========================================
+# Misc
+# ========================================
+composer.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

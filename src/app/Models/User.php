@@ -6,6 +6,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Chat;
+use App\Models\Contact;
+use App\Models\Message;
 
 class User extends Authenticatable
 {
@@ -20,6 +23,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'nickname',
+        'avatar_path',
+        'hide_email',
         'password',
     ];
 
@@ -42,7 +48,25 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'hide_email' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    public function chats()
+    {
+        return $this->belongsToMany(Chat::class)
+            ->withPivot(['role'])
+            ->withTimestamps();
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
     }
 }

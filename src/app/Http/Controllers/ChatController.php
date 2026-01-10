@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Chat;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ChatController extends Controller
 {
     public function index(Request $request)
     {
+        if (!$request->expectsJson()) {
+            return Inertia::render('Chats/Index');
+        }
+
         $chats = Chat::query()
             ->with(['users', 'messages' => function ($query) {
                 $query->latest()->limit(1);

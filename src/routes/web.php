@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chats', [ChatController::class, 'index'])->name('chats.index');
     Route::post('/chats', [ChatController::class, 'store'])->name('chats.store');
     Route::get('/chats/{chat}', [ChatController::class, 'show'])->name('chats.show');
+    Route::patch('/chats/{chat}/notifications', [ChatController::class, 'updateNotifications'])
+        ->name('chats.notifications');
 
     Route::post('/messages', [MessageController::class, 'send'])->name('messages.send');
     Route::patch('/messages/{message}', [MessageController::class, 'update'])->name('messages.update');

@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use App\Models\Chat;
 use App\Models\Contact;
 use App\Models\Message;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -40,6 +41,15 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -51,6 +61,15 @@ class User extends Authenticatable implements MustVerifyEmail
             'hide_email' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->avatar_path) {
+            return Storage::url($this->avatar_path);
+        }
+
+        return asset('images/default-avatar.svg');
     }
 
     public function contacts()

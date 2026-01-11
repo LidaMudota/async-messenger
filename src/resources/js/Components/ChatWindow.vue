@@ -1,7 +1,14 @@
 <template>
     <section class="flex h-full w-full flex-col">
-        <header class="border-b border-gray-200 px-4 py-3">
+        <header class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h3 class="text-base font-semibold text-gray-900" v-text="chatTitle" />
+            <button
+                type="button"
+                class="text-xs font-medium text-gray-600 hover:text-indigo-600"
+                @click="toggleNotifications"
+            >
+                {{ notificationsEnabled ? 'Отключить уведомления' : 'Включить уведомления' }}
+            </button>
         </header>
         <div class="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
             <MessageItem
@@ -30,12 +37,20 @@
                 Отправить
             </button>
         </form>
+
+        <ForwardMessageModal
+            :show="isForwardModalOpen"
+            :contacts="contacts"
+            @close="closeForwardModal"
+            @forward="confirmForward"
+        />
     </section>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import MessageItem from './MessageItem.vue';
+import ForwardMessageModal from './ForwardMessageModal.vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -47,12 +62,21 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    contacts: {
+        type: Array,
+        default: () => [],
+    },
 });
 
+const emit = defineEmits(['notifications-updated', 'refresh-chats']);
 const messages = ref([]);
 const draft = ref('');
 const isSending = ref(false);
+const isForwardModalOpen = ref(false);
+const forwardMessageId = ref(null);
 let channel = null;
+
+const notificationsEnabled = computed(() => props.chat.notifications_enabled !== false);
 
 const chatTitle = computed(() => {
     if (props.chat.is_group && props.chat.title) {
@@ -75,6 +99,9 @@ const subscribe = () => {
     channel = window.Echo.private(`chat.${props.chat.id}`)
         .listen('MessageSent', (event) => {
             messages.value.push(event.message);
+            if (event.message.user_id !== props.currentUser.id) {
+                playNotificationSound();
+            }
         })
         .listen('MessageUpdated', (event) => {
             const index = messages.value.findIndex((item) => item.id === event.message.id);
@@ -92,6 +119,40 @@ const unsubscribe = () => {
         window.Echo.leave(`private-chat.${props.chat.id}`);
         channel = null;
     }
+};
+
+const toggleNotifications = async () => {
+    const response = await axios.patch(`/chats/${props.chat.id}/notifications`, {
+        enabled: !notificationsEnabled.value,
+    });
+
+    emit('notifications-updated', response.data.notifications_enabled);
+};
+
+const playNotificationSound = () => {
+    if (!notificationsEnabled.value) {
+        return;
+    }
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+        return;
+    }
+
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    gain.gain.value = 0.05;
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.12);
+    oscillator.onended = () => context.close();
 };
 
 const sendMessage = async () => {
@@ -128,11 +189,27 @@ const deleteMessage = async (messageId) => {
 };
 
 const forwardMessage = async (messageId) => {
-    const response = await axios.post('/messages/forward', {
-        chat_id: props.chat.id,
-        message_id: messageId,
+    forwardMessageId.value = messageId;
+    isForwardModalOpen.value = true;
+};
+
+const closeForwardModal = () => {
+    isForwardModalOpen.value = false;
+    forwardMessageId.value = null;
+};
+
+const confirmForward = async (payload) => {
+    if (!forwardMessageId.value) {
+        return;
+    }
+
+    await axios.post('/messages/forward', {
+        message_id: forwardMessageId.value,
+        recipient_id: payload.recipient_id,
     });
-    messages.value.push(response.data);
+
+    closeForwardModal();
+    emit('refresh-chats');
 };
 
 watch(

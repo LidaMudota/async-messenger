@@ -6,6 +6,7 @@ use App\Events\MessageDeleted;
 use App\Events\MessageSent;
 use App\Events\MessageUpdated;
 use App\Models\Chat;
+use App\Models\Contact;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
@@ -78,21 +79,55 @@ class MessageController extends Controller
     public function forward(Request $request)
     {
         $data = $request->validate([
-            'chat_id' => ['required', 'integer', 'exists:chats,id'],
+            'recipient_id' => ['required', 'integer', 'exists:users,id'],
             'message_id' => ['required', 'integer', 'exists:messages,id'],
         ]);
 
-        $chat = $this->resolveChat($data['chat_id'], $request);
+        $user = $request->user();
+        $recipientId = $data['recipient_id'];
 
-        if (!$chat) {
-            return response()->json(['message' => 'Доступ запрещён.'], 403);
+        if ($recipientId === $user->id) {
+            return response()->json(['message' => 'Нельзя пересылать себе.'], 422);
+        }
+
+        $isContact = Contact::query()
+            ->where('user_id', $user->id)
+            ->where('contact_user_id', $recipientId)
+            ->exists();
+
+        if (! $isContact) {
+            return response()->json(['message' => 'Получатель должен быть в контактах.'], 422);
+        }
+
+        $chat = Chat::query()
+            ->where('is_group', false)
+            ->whereHas('users', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            })
+            ->whereHas('users', function ($query) use ($recipientId) {
+                $query->where('users.id', $recipientId);
+            })
+            ->has('users', 2)
+            ->first();
+
+        if (! $chat) {
+            $chat = Chat::create([
+                'title' => null,
+                'is_group' => false,
+                'created_by' => $user->id,
+            ]);
+
+            $chat->users()->attach([
+                $user->id => ['role' => 'owner'],
+                $recipientId => ['role' => 'member'],
+            ]);
         }
 
         $original = Message::with('sender')->findOrFail($data['message_id']);
 
         $message = Message::create([
             'chat_id' => $chat->id,
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'body' => $original->body,
             'forwarded_message_id' => $original->id,
         ]);
@@ -101,7 +136,10 @@ class MessageController extends Controller
 
         broadcast(new MessageSent($message))->toOthers();
 
-        return response()->json($message, 201);
+        return response()->json([
+            'message' => $message,
+            'chat_id' => $chat->id,
+        ], 201);
     }
 
     private function resolveChat(int $chatId, Request $request): ?Chat

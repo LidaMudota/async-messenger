@@ -7,10 +7,16 @@
                 :key="chat.id"
                 type="button"
                 class="flex w-full flex-col gap-1 rounded-lg border px-3 py-2 text-left transition"
-                :class="chat.id === activeChatId ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white'"
+                :class="[
+                    chat.id === activeChatId ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white',
+                    chat.notifications_enabled === false ? 'opacity-60' : '',
+                ]"
                 @click="$emit('select', chat)"
             >
-                <span class="text-sm font-medium text-gray-900" v-text="chatLabel(chat)" />
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900" v-text="chatLabel(chat)" />
+                    <span v-if="chat.notifications_enabled === false" class="text-xs text-gray-500">í´•</span>
+                </div>
                 <span class="text-xs text-gray-500" v-text="lastMessagePreview(chat)" />
             </button>
         </div>

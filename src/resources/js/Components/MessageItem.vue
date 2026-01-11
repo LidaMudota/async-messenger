@@ -1,9 +1,15 @@
 <template>
-    <div class="flex flex-col gap-2 rounded-lg border px-3 py-2" :class="isOwn ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200 bg-white'">
-        <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-gray-600" v-text="authorLabel" />
-            <span class="text-[10px] text-gray-400" v-text="timeLabel" />
-        </div>
+    <div class="flex gap-3 rounded-lg border px-3 py-2" :class="isOwn ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200 bg-white'">
+        <img
+            :src="avatarUrl"
+            alt="Avatar"
+            class="h-9 w-9 rounded-full object-cover"
+        />
+        <div class="flex flex-1 flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-gray-600" v-text="authorLabel" />
+                <span class="text-[10px] text-gray-400" v-text="timeLabel" />
+            </div>
         <p class="text-sm text-gray-800" v-text="message.body" />
         <div v-if="message.forwarded_message_id" class="text-xs text-gray-400">
             Пересланное сообщение
@@ -26,6 +32,7 @@
             <button type="button" class="rounded-md bg-indigo-600 px-2 py-1 text-xs text-white" @click="onSave">
                 Сохранить
             </button>
+        </div>
         </div>
     </div>
 </template>
@@ -58,6 +65,7 @@ watch(
 );
 
 const authorLabel = computed(() => props.message.sender?.nickname || props.message.sender?.name || 'Пользователь');
+const avatarUrl = computed(() => props.message.sender?.avatar_url || '/images/default-avatar.svg');
 
 const timeLabel = computed(() => {
     if (!props.message.created_at) {

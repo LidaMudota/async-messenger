@@ -65,6 +65,21 @@ const createGroup = async (payload) => {
     closeGroupModal();
 };
 
+const updateNotifications = (enabled) => {
+    if (!activeChat.value) {
+        return;
+    }
+
+    activeChat.value = { ...activeChat.value, notifications_enabled: enabled };
+    chats.value = chats.value.map((chat) =>
+        chat.id === activeChat.value.id ? { ...chat, notifications_enabled: enabled } : chat,
+    );
+};
+
+const refreshChats = () => {
+    loadChats();
+};
+
 onMounted(() => {
     loadChats();
     loadContacts();
@@ -108,6 +123,9 @@ onMounted(() => {
                             v-else-if="activeChat"
                             :chat="activeChat"
                             :current-user="currentUser"
+                            :contacts="contacts"
+                            @notifications-updated="updateNotifications"
+                            @refresh-chats="refreshChats"
                         />
                         <div v-else class="flex flex-1 items-center justify-center text-sm text-gray-500">
                             Выберите чат, чтобы начать переписку.

@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +34,14 @@ class ProfileController extends Controller
 
         if ($request->has('hide_email')) {
             $data['hide_email'] = $request->boolean('hide_email');
+        }
+
+        if ($request->hasFile('avatar')) {
+            $user = $request->user();
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+            $data['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $request->user()->fill($data);

@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ChatList from '@/Components/ChatList.vue';
 import ChatWindow from '@/Components/ChatWindow.vue';
 import GroupCreateModal from '@/Components/GroupCreateModal.vue';
+import ContactSearchModal from '@/Components/ContactSearchModal.vue';
 
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
@@ -14,6 +15,7 @@ const chats = ref([]);
 const activeChat = ref(null);
 const isLoading = ref(false);
 const isGroupModalOpen = ref(false);
+const isContactModalOpen = ref(false);
 const contacts = ref([]);
 
 const loadChats = async () => {
@@ -51,6 +53,18 @@ const openGroupModal = () => {
 
 const closeGroupModal = () => {
     isGroupModalOpen.value = false;
+};
+
+const openContactModal = () => {
+    isContactModalOpen.value = true;
+};
+
+const closeContactModal = () => {
+    isContactModalOpen.value = false;
+};
+
+const handleContactAdded = () => {
+    loadContacts();
 };
 
 const createGroup = async (payload) => {
@@ -102,6 +116,13 @@ onMounted(() => {
                 >
                     Новая группа
                 </button>
+                <button
+                    type="button"
+                    class="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                    @click="openContactModal"
+                >
+                    Добавить контакт
+                </button>
             </div>
         </template>
 
@@ -140,6 +161,13 @@ onMounted(() => {
             :users="contacts"
             @close="closeGroupModal"
             @create="createGroup"
+        />
+
+        <ContactSearchModal
+            :show="isContactModalOpen"
+            :existing-contact-ids="contacts.map((contact) => contact.id)"
+            @close="closeContactModal"
+            @added="handleContactAdded"
         />
     </AuthenticatedLayout>
 </template>

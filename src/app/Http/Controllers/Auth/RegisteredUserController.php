@@ -35,6 +35,8 @@ class RegisteredUserController extends Controller
             'nickname' => 'required|string|max:255|unique:'.User::class,
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'nickname.unique' => 'Этот nickname уже занят.',
         ]);
 
         $user = User::create([

@@ -12,9 +12,15 @@
             </div>
             <div class="space-y-2">
                 <label class="text-xs font-medium text-gray-600">Участники</label>
+                <input
+                    v-model="search"
+                    type="text"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                    placeholder="Поиск по контактам"
+                />
                 <div class="max-h-40 space-y-2 overflow-y-auto">
                     <label
-                        v-for="user in users"
+                        v-for="user in filteredUsers"
                         :key="user.id"
                         class="flex items-center gap-2 text-sm text-gray-700"
                     >
@@ -26,6 +32,7 @@
                         />
                         <span v-text="user.nickname || user.name" />
                     </label>
+                    <p v-if="!filteredUsers.length" class="text-xs text-gray-500">Контакты не найдены.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-2">
@@ -46,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Modal from './Modal.vue';
 
 const props = defineProps({
@@ -64,6 +71,21 @@ const emit = defineEmits(['create', 'close']);
 
 const title = ref('');
 const selectedIds = ref([]);
+const search = ref('');
+
+const filteredUsers = computed(() => {
+    const term = search.value.trim().toLowerCase();
+    if (!term) {
+        return props.users;
+    }
+
+    return props.users.filter((user) => {
+        const nickname = (user.nickname || '').toLowerCase();
+        const name = (user.name || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        return nickname.includes(term) || name.includes(term) || email.includes(term);
+    });
+});
 
 watch(
     () => props.show,
@@ -71,6 +93,7 @@ watch(
         if (value) {
             title.value = '';
             selectedIds.value = [];
+            search.value = '';
         }
     },
 );

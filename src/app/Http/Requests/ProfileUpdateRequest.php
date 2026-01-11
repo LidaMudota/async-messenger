@@ -36,6 +36,13 @@ class ProfileUpdateRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'nickname.unique' => 'Этот nickname уже занят.',
+        ];
+    }
+
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {

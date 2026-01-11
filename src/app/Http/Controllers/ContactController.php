@@ -35,11 +35,11 @@ class ContactController extends Controller
         }
 
         if (!$contactUser && !empty($data['email'])) {
-            $contactUser = User::where('email', $data['email'])
-                ->where(function ($query) {
-                    $query->where('hide_email', false)
-                        ->orWhereNull('nickname');
-                })
+            $email = mb_strtolower($data['email']);
+
+            $contactUser = User::query()
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->where('hide_email', false)
                 ->first();
         }
 
